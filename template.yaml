@@ -1,0 +1,277 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  eventbridge-integration-solution-zendesk-ticket-translations
+
+  (qs-1qp3lnajg)
+
+Metadata:
+  AWS::Serverless::Application:
+    Name: Eventbridge-Integration-Solution-Zendesk-Ticket-Translations
+    Description: This application demonstrates an integration with AWS Step Functions, AWS Lambda, and Amazon Translate for Amazon EventBridge SaaS Partner Zendesk
+    Author: AWS Quick Starts
+    LicenseUrl: LICENSE
+    ReadmeUrl: README.md
+    Labels:
+      - amazon
+      - eventbridge
+      - integration
+      - solution
+      - aws
+      - lambda
+      - step functions
+      - zendesk
+      - translate
+    HomePageUrl: https://aws.amazon.com/quickstart/eventbridge/zendesk-ticket-translations
+    SemanticVersion: 1.0.0
+    SourceCodeUrl: https://github.com/aws-quickstart/eventbridge-integration-solution-zendesk-ticket-translations
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Amazon EventBridge Integration Solution
+        Parameters:
+          - EventSourceName
+      - Label:
+          default: Zendesk Assets
+        Parameters:
+          - Subdomain
+          - Email
+          - Token
+      - Label:
+          default: Target Language
+        Parameters:
+          - TargetLanguage
+    ParameterLabels:
+      EventSourceName:
+        default: Event Source Name
+
+Parameters:
+  EventSourceName:
+    Type: String
+    Default: aws.partner/zendesk.com/123456/default
+    MinLength: 1
+    MaxLength: 256
+    Description: Name of the Amazon EventBridge Zendesk Event Source to associate with an Event Bus. For example, aws.partner/zendesk.com/123456/default
+  Subdomain:
+    Type: String
+    Default: "Zendesk Subdomain"
+  Email:
+    Type: String
+    Default: "Zendesk Email -- hello@example.com"
+  Token:
+    Type: String
+    Default: "Zendesk API Token"
+  TargetLanguage:
+    Type: String
+    Default: en
+    MinLength: 2
+    MaxLength: 5
+    Description: "The language you want to translate to. Details: https://docs.aws.amazon.com/translate/latest/dg/what-is.html#what-is-languages"
+Globals:
+  Function:
+    Timeout: 30
+    Environment:
+      Variables:
+        email: !Ref Email
+        subdomain: !Ref Subdomain
+        token: !Ref Token
+        TargetLanguage: !Ref TargetLanguage
+Resources:
+#############
+#  Lambdas  #
+#############
+  GetTicket:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/get_ticket
+      Handler: app.lambda_handler
+      Runtime: python3.8
+  TranslateTicket:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/translate_ticket
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Policies:
+        - ComprehendBasicAccessPolicy: {}
+        - Statement:
+          - Sid: TranslateTextPolicy
+            Effect: Allow
+            Action: translate:TranslateText
+            Resource: "*"
+  PostComment:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/post_comment
+      Handler: app.lambda_handler
+      Runtime: python3.8
+#################
+#  EventBridge  #
+#################
+  EventBridgeEventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: !Ref EventSourceName
+      EventSourceName: !Ref EventSourceName
+  ZendeskTranslateRule:
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: Takes comments on tickets and runs them through Step Functions
+      EventBusName: !Ref EventBridgeEventBus
+      EventPattern:
+        account:
+        - !Ref "AWS::AccountId"
+        detail-type:
+        - 'Support Ticket: Comment Created'
+      State: ENABLED
+      Targets: 
+      - Arn:  !Ref TheTranslator
+        Id: TheTranslator
+        RoleArn: !GetAtt EventBridgeInvokeTranslator.Arn
+  EventBridgeInvokeTranslator:
+    Type: AWS::IAM::Role
+    Properties: 
+      Description: Role for invoking StepFunctions
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - events.amazonaws.com
+          Action: "sts:AssumeRole"
+      Policies:
+      - PolicyName: EventBridgeInvokeTranslatorPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - states:StartExecution
+            Resource:
+            - !Ref TheTranslator
+
+###################
+#  StepFunctions  #
+###################
+  TheTranslator:
+    Type: AWS::StepFunctions::StateMachine
+    Properties: 
+      DefinitionString: !Sub |
+        {
+          "Comment": "Translating Zendesk Tickets with EventBridge, Step Functions, Lambda, and Translate.",
+          "StartAt": "GetTicket",
+          "States": {
+            "GetTicket": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${GetTicket}",
+                "Payload": {
+                  "detail-type.$": "$.detail-type",
+                  "id.$": "$.detail.ticket_event.ticket.id",
+                  "content.$": "$.detail.ticket_event"
+                }
+              },
+              "Next": "TranslateTicket"
+            },
+            "TranslateTicket": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${TranslateTicket}",
+                "Payload": {
+                  "Input.$": "$.Payload"
+                }
+              },
+              "Next": "toTranslateOrNot"
+              },
+              "toTranslateOrNot": {
+                "Type": "Choice",
+                "Choices": [
+                  {
+                    "Not": {
+                      "Variable": "$.Payload.Original_Langugage",
+                      "StringEquals": "$.Payload.To_Language"
+                    },
+                    "Next": "PostComment"
+                  },
+                  {
+                    "Variable": "$.Payload.Original_Langugage",
+                    "StringEquals": "$.Payload.To_Languages",
+                    "Next": "EndState"
+                  }
+                ],
+                "Default": "PostComment"
+              },
+              "PostComment": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::lambda:invoke",
+                "Parameters": {
+                  "FunctionName": "${PostComment}",
+                  "Payload": {
+                    "Input.$": "$.Payload"
+                  }
+                },
+                "End": true
+              },
+              "EndState": {
+                "Type": "Succeed"
+              }
+            }
+          }
+      RoleArn: !GetAtt TheTranslatorRole.Arn
+      StateMachineName: TheTranslator
+      StateMachineType: EXPRESS
+  TheTranslatorRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      Description: Role for invoking Lambdas
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - !Sub states.${AWS::Region}.amazonaws.com
+          Action: "sts:AssumeRole"
+      Path: "/"
+      Policies:
+      - PolicyName: TheTranslatorPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "lambda:InvokeFunction"
+            Resource:
+            - !GetAtt GetTicket.Arn
+            - !GetAtt TranslateTicket.Arn
+            - !GetAtt PostComment.Arn
+          - Effect: Allow
+            Action:
+            - logs:CreateLogDelivery
+            - logs:GetLogDelivery
+            - logs:UpdateLogDelivery
+            - logs:DeleteLogDelivery
+            - logs:ListLogDeliveries
+            - logs:PutResourcePolicy
+            - logs:DescribeResourcePolicies
+            - logs:DescribeLogGroups
+            Resource: "*"
+Outputs:
+  EventBridgeEventBus:
+    Description: SaaS Event Bus ARN
+    Value: !GetAtt EventBridgeEventBus.Arn
+  EventBridgeRule:
+    Description: EventBridge Rule ARN
+    Value: !GetAtt ZendeskTranslateRule.Arn
+  GetTicketFunction:
+    Description: GetTicket Function ARN
+    Value: !GetAtt GetTicket.Arn
+  TranslateTicketFunction:
+    Description: TranslateTicket Function ARN
+    Value: !GetAtt TranslateTicket.Arn
+  PostCommentFunction:
+    Description: PostComment Function ARN
+    Value: !GetAtt PostComment.Arn
