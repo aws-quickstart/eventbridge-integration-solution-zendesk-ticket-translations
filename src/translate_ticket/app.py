@@ -15,7 +15,7 @@ def lambda_handler(event, context):
     translation = client.translate_text(
         Text=edited_comment,
         SourceLanguageCode='auto',
-        TargetLanguageCode=os.environ['TargetLanguage']
+        TargetLanguageCode=os.environ['target_language']
     )
 
     print(translation)

@@ -1,4 +1,4 @@
-# eventbridge-integration-solution-ticket-translations
+# eventbridge-integration-solution-zendesk-ticket-translations
 ## Amazon EventBridge Integration Solution: Translating Zendesk Tickets
 
 This Quick Start demonstrates an integration with AWS Step Functions, AWS Lambda, and AMazon Translate for Amazon EventBridge SaaS Partner Integrations with Zendesk. This solution leverages Zendesk events, sending them to an Amazon EventBridge event bus that uses a rule to evaluate "Comment Created" events and targets a Step Functions execution when events are match. Once sent to Step Functions, Lambdas are invoked that:
@@ -9,7 +9,7 @@ This Quick Start demonstrates an integration with AWS Step Functions, AWS Lambda
 
 3) update the ticket with an 'internal' comment
 
-![Quick Start architecture for EventBridge Integration Solution: Zendesk Translate](images/eventbridge-zendesk-translate.png)
+![Quick Start architecture for EventBridge Integration Solution: Zendesk Translate](https://github.com/aws-quickstart/eventbridge-integration-solution-zendesk-ticket-translations/raw/master/images/eventbridge-zendesk-translate.png)
 
 For details and launch information, see the [data sheet](https://aws.amazon.com/quickstart/eventbridge/zendesk-ticket-translatations).
 

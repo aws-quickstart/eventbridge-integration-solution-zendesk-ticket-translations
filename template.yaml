@@ -7,75 +7,85 @@ Description: >
 
 Metadata:
   AWS::Serverless::Application:
-    Name: Eventbridge-Integration-Solution-Zendesk-Ticket-Translations
+    Name: Amazon-EventBridge-Integration-Solution-Zendesk-Ticket-Translations
     Description: This application demonstrates an integration with AWS Step Functions, AWS Lambda, and Amazon Translate for Amazon EventBridge SaaS Partner Zendesk
-    Author: AWS Quick Starts
+    Author: AWS Quick Start
     LicenseUrl: LICENSE
     ReadmeUrl: README.md
     Labels:
-      - amazon
-      - eventbridge
-      - integration
-      - solution
-      - aws
-      - lambda
-      - step functions
-      - zendesk
-      - translate
+    - amazon
+    - eventbridge
+    - integration
+    - solution
+    - aws
+    - lambda
+    - step functions
+    - zendesk
+    - translate
     HomePageUrl: https://aws.amazon.com/quickstart/eventbridge/zendesk-ticket-translations
-    SemanticVersion: 1.0.0
+    SemanticVersion: 0.1.0
     SourceCodeUrl: https://github.com/aws-quickstart/eventbridge-integration-solution-zendesk-ticket-translations
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label:
-          default: Amazon EventBridge Integration Solution
-        Parameters:
-          - EventSourceName
-      - Label:
-          default: Zendesk Assets
-        Parameters:
-          - Subdomain
-          - Email
-          - Token
-      - Label:
-          default: Target Language
-        Parameters:
-          - TargetLanguage
+    - Label:
+        default: Amazon EventBridge Integration Solution
+      Parameters:
+      - EventSourceName
+      - TargetLanguage
+    - Label:
+        default: Zendesk Configuration
+      Parameters:
+      - ZendeskSubdomain
+      - ZendeskEmail
+      - ZendeskAPIToken
     ParameterLabels:
       EventSourceName:
         default: Event Source Name
+      TargetLanguage:
+        default: Target Language
+      ZendeskAPIToken:
+        default: API Token
+      ZendeskEmail:
+        default: Email
+      ZendeskSubdomain:
+        default: Subdomain
 
 Parameters:
   EventSourceName:
     Type: String
-    Default: aws.partner/zendesk.com/123456/default
+    AllowedPattern: aws\.partner(/[\.\-_A-Za-z0-9]+){2,}
     MinLength: 1
     MaxLength: 256
     Description: Name of the Amazon EventBridge Zendesk Event Source to associate with an Event Bus. For example, aws.partner/zendesk.com/123456/default
-  Subdomain:
-    Type: String
-    Default: "Zendesk Subdomain"
-  Email:
-    Type: String
-    Default: "Zendesk Email -- hello@example.com"
-  Token:
-    Type: String
-    Default: "Zendesk API Token"
   TargetLanguage:
     Type: String
     Default: en
     MinLength: 2
     MaxLength: 5
-    Description: "The language you want to translate to. Details: https://docs.aws.amazon.com/translate/latest/dg/what-is.html#what-is-languages"
+    Description: The language you want to translate to. For more details, visit https://docs.aws.amazon.com/translate/latest/dg/what-is.html#what-is-languages
+  ZendeskAPIToken:
+    Type: String
+    NoEcho: true
+    MinLength: 1
+    Description: The Zendesk API token used to access the Zendesk API
+  ZendeskEmail:
+    Type: String
+    MinLength: 1
+    Description: The Zendesk agent email used for Zendesk API access
+  ZendeskSubdomain:
+    Type: String
+    MinLength: 1
+    Description: The Zendesk subdomain which is a unique identifier of your Zendesk account
+
 Globals:
   Function:
     Timeout: 30
     Environment:
       Variables:
-        email: !Ref Email
-        subdomain: !Ref Subdomain
-        token: !Ref Token
-        TargetLanguage: !Ref TargetLanguage
+        email: !Ref ZendeskEmail
+        subdomain: !Ref ZendeskSubdomain
+        token: !Ref ZendeskAPIToken
+        target_language: !Ref TargetLanguage
 Resources:
 #############
 #  Lambdas  #

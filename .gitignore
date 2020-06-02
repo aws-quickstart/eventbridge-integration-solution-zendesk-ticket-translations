@@ -242,5 +242,6 @@ $RECYCLE.BIN/
 */build/*
 
 samconfig.toml
+packaged.y*ml
 
 # End of https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode
