@@ -11,6 +11,5 @@ This Quick Start demonstrates an integration with AWS Step Functions, AWS Lambda
 
 ![Quick Start architecture for EventBridge Integration Solution: Zendesk Translate](https://github.com/aws-quickstart/eventbridge-integration-solution-zendesk-ticket-translations/raw/master/images/eventbridge-zendesk-translate.png)
 
-For details and launch information, see the [data sheet](https://aws.amazon.com/quickstart/eventbridge/zendesk-ticket-translatations).
 
 To post feedback, submit feature ideas, or report bugs, use the **Issues** section of [this GitHub repo](https://github.com/aws-quickstart/eventbridge-integration-solution-zendesk-ticket-translations).
