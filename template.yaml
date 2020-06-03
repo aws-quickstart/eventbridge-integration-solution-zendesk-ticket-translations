@@ -22,8 +22,8 @@ Metadata:
     - step_functions
     - zendesk
     - translate
-    HomePageUrl: https://aws.amazon.com/quickstart/eventbridge/zendesk-ticket-translations
-    SemanticVersion: 0.1.0
+    HomePageUrl: https://github.com/aws-quickstart/eventbridge-integration-solution-zendesk-ticket-translations
+    SemanticVersion: 0.1.1
     SourceCodeUrl: https://github.com/aws-quickstart/eventbridge-integration-solution-zendesk-ticket-translations
   AWS::CloudFormation::Interface:
     ParameterGroups:
