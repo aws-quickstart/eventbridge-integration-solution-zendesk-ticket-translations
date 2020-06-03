@@ -19,7 +19,7 @@ Metadata:
     - solution
     - aws
     - lambda
-    - step functions
+    - step_functions
     - zendesk
     - translate
     HomePageUrl: https://aws.amazon.com/quickstart/eventbridge/zendesk-ticket-translations
