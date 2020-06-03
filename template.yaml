@@ -6,7 +6,7 @@ Description: >
   (qs-1qp3lnajg)
 
 Metadata:
-  AWS::Serverless::Application:
+  AWS::ServerlessRepo::Application:
     Name: Amazon-EventBridge-Integration-Solution-Zendesk-Ticket-Translations
     Description: This application demonstrates an integration with AWS Step Functions, AWS Lambda, and Amazon Translate for Amazon EventBridge SaaS Partner Zendesk
     Author: AWS Quick Start
