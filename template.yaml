@@ -23,7 +23,7 @@ Metadata:
     - zendesk
     - translate
     HomePageUrl: https://github.com/aws-quickstart/eventbridge-integration-solution-zendesk-ticket-translations
-    SemanticVersion: 0.1.1
+    SemanticVersion: 0.1.2
     SourceCodeUrl: https://github.com/aws-quickstart/eventbridge-integration-solution-zendesk-ticket-translations
   AWS::CloudFormation::Interface:
     ParameterGroups:
